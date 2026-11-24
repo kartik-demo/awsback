@@ -1,4 +1,6 @@
+import importlib
 import os
+import secrets
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,9 +9,12 @@ from sqlalchemy.orm import sessionmaker
 
 # Keep app imports in tests on an in-memory database and a non-production key.
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-os.environ["JWT_SECRET"] = "ci-test-only-secret-never-use-in-production"
+os.environ["JWT_SECRET"] = secrets.token_urlsafe(48)
 
-from main import Base, app, db_session  # noqa: E402
+main = importlib.import_module("main")
+Base = main.Base
+app = main.app
+db_session = main.db_session
 
 
 @pytest.fixture

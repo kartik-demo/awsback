@@ -21,10 +21,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Python 3.14
-        uses: actions/setup-python@v7.1.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"
           cache: pip
@@ -41,12 +43,12 @@ jobs:
         run: python -m compileall -q main.py tests
 
       - name: Run Ruff code quality checks
-        run: python -m ruff check --select E4,E7,E9,F --ignore E701 main.py tests
+        run: python -m ruff check --select E4,E7,E9,F main.py tests
 
       - name: Validate FastAPI application import
         run: >-
-          python -c "import os; os.environ['DATABASE_URL']='sqlite:///:memory:';
-          os.environ['JWT_SECRET']='ci-test-only-secret-never-use-in-production';
+          python -c "import os,secrets; os.environ['DATABASE_URL']='sqlite:///:memory:';
+          os.environ['JWT_SECRET']=secrets.token_urlsafe(48);
           import main; assert main.app; print('FastAPI application import succeeded.')"
 
       - name: Run automated tests
@@ -54,8 +56,10 @@ jobs:
 
       - name: Report CI success
         if: success()
-        run: echo "Backend CI passed: syntax, Ruff, application import, and pytest."
+        run: |
+          echo "Backend CI passed: syntax, Ruff, application import, and pytest."
 
       - name: Report CI failure
         if: failure()
-        run: echo "::error title=Backend CI failed::Review the failed syntax, lint, import, or test step."
+        run: |
+          echo "::error title=Backend CI failed::Review the failed syntax, lint, import, or test step."
